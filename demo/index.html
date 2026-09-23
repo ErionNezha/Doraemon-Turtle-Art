@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<!-- Created by Erion Nezha — © 2026 All rights reserved -->
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doraemon Turtle Art — Demo Live</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#050505;color:#e8e8e8;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:18px 12px}
+h1{font-size:1.5rem;margin-bottom:6px;color:#4fc3f7}
+.sub{color:#9fb3c8;font-size:.9rem;max-width:720px;text-align:center;line-height:1.6;margin-bottom:12px}
+.controls{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;justify-content:center}
+button{background:#00a0de;color:#04121a;border:none;padding:10px 22px;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer}
+button:hover{background:#4fc3f7}
+#status{color:#9fb3c8;font-size:.88rem;min-width:180px;text-align:center}
+.stage{width:100%;max-width:860px}
+canvas{width:100%;height:72vh;min-height:420px;background:#000;border:1px solid #ffffff22;border-radius:12px;display:block}
+.progress{height:6px;background:#ffffff14;border-radius:3px;margin-top:10px;overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#00a0de,#4fc3f7)}
+footer{margin-top:16px;color:#5c6b7f;font-size:.85rem;text-align:center}
+footer strong{color:#9fb3c8}
+.note{margin-top:10px;font-size:.8rem;color:#5c6b7f;max-width:720px;text-align:center;line-height:1.6}
+</style>
+</head>
+<body>
+<h1>🔵 Doraemon — vizatim me Python Turtle</h1>
+<p class="sub">Portim besnik i skriptit origjinal <b>Doraemon.py</b> në HTML5 Canvas: e njëjta logjikë gjeometrike
+turtle (<i>fd / lt / rt / circle / seth / goto</i>), e animuar hap pas hapi — kokë blu, fytyrë e bardhë,
+sy, hundë e kuqe, mustaqe, gojë, trup, këmbë dhe zile e verdhë.</p>
+<div class="controls">
+<button id="replay">🔁 Rivizato</button>
+<span id="status">Duke u përgatitur…</span>
+</div>
+<div class="stage">
+<canvas id="c"></canvas>
+<div class="progress"><i id="bar"></i></div>
+</div>
+<p class="note">Demo-ja ekzekuton në browser të njëjtat komanda vizatimi si origjinali Python (turtle graphics).
+Kodi burim origjinal i paprekur: <b>original/Doraemon.py</b> → tab-i “Kodi Burim”.</p>
+<footer>Krijuar nga <strong>Erion Nezha</strong> — © 2026</footer>
+<script>
+"use strict";
+/* ---------- Turtle simulator (same geometry as Python turtle: y-up, 0°=east, CCW+) ---------- */
+function makeTurtle(){
+  var T={x:0,y:0,h:0,down:true,color:"#f2f2f2",width:3,filling:false,fillColor:"#ffffff",fillPts:[],ops:[]};
+  var R=Math.PI/180;
+  function rec(pts){
+    if(T.down&&pts.length>1)T.ops.push({t:"s",p:pts,c:T.color,w:T.width});
+    if(T.filling)for(var i=0;i<pts.length;i++)T.fillPts.push(pts[i]);
+  }
+  function fd(d){var nx=T.x+d*Math.cos(T.h*R),ny=T.y+d*Math.sin(T.h*R);rec([[T.x,T.y],[nx,ny]]);T.x=nx;T.y=ny;}
+  function lt(a){T.h+=a;}
+  function rt(a){T.h-=a;}
+  function seth(a){T.h=a;}
+  function penup(){T.down=false;}
+  function pendown(){T.down=true;}
+  function goto(x,y){rec([[T.x,T.y],[x,y]]);T.x=x;T.y=y;}
+  function circle(r,e){
+    if(e===undefined||e===null)e=360;
+    var side=r>=0?1:-1, ra=Math.abs(r), se=side*e;
+    var ca=(T.h+side*90)*R;
+    var cx=T.x+ra*Math.cos(ca), cy=T.y+ra*Math.sin(ca);
+    var phi0=(T.h-side*90)*R;
+    var steps=Math.max(4,Math.ceil(Math.abs(e)/2));
+    var pts=[[T.x,T.y]],i,a;
+    for(i=1;i<=steps;i++){a=phi0+se*R*i/steps;pts.push([cx+ra*Math.cos(a),cy+ra*Math.sin(a)]);}
+    rec(pts);T.x=pts[steps][0];T.y=pts[steps][1];T.h+=se;
+  }
+  function dot(d){var r=d/2,pts=[],i,a;for(i=0;i<=28;i++){a=i/28*2*Math.PI;pts.push([T.x+r*Math.cos(a),T.y+r*Math.sin(a)]);}T.ops.push({t:"f",p:pts,c:T.color});}
+  function fillcolor(c){T.fillColor=c;}
+  function pencolor(c){T.color=c;}
+  function pensize(w){T.width=w;}
+  function begin_fill(){T.filling=true;T.fillPts=[[T.x,T.y]];}
+  function end_fill(){T.filling=false;if(T.fillPts.length>2)T.ops.push({t:"f",p:T.fillPts,c:T.fillColor});T.fillPts=[];}
+  return {T:T,fd:fd,lt:lt,rt:rt,seth:seth,penup:penup,pendown:pendown,goto:goto,circle:circle,dot:dot,
+          fillcolor:fillcolor,pencolor:pencolor,pensize:pensize,begin_fill:begin_fill,end_fill:end_fill};
+}
+
+/* ---------- Exact transliteration of Doraemon.py ---------- */
+var TM=makeTurtle();
+function ankur(x,y){TM.penup();TM.goto(x,y);TM.pendown();}
+function aankha(){
+  TM.fillcolor("#ffffff");TM.begin_fill();
+  var a=2.5,i;
+  for(i=0;i<120;i++){
+    if((0<=i&&i<30)||(60<=i&&i<90)){a-=0.05;TM.lt(3);TM.fd(a);}
+    else{a+=0.05;TM.lt(3);TM.fd(a);}
+  }
+  TM.end_fill();
+}
+function daari(){
+  ankur(-32,135);TM.seth(165);TM.fd(60);
+  ankur(-32,125);TM.seth(180);TM.fd(60);
+  ankur(-32,115);TM.seth(193);TM.fd(60);
+  ankur(37,135);TM.seth(15);TM.fd(60);
+  ankur(37,125);TM.seth(0);TM.fd(60);
+  ankur(37,115);TM.seth(-13);TM.fd(60);
+}
+function mukh(){
+  ankur(5,148);TM.seth(270);TM.fd(100);
+  TM.seth(0);TM.circle(120,50);
+  TM.seth(230);TM.circle(-120,100);
+}
+function muflar(){
+  TM.fillcolor("#e70010");TM.begin_fill();
+  TM.seth(0);TM.fd(200);
+  TM.circle(-5,90);TM.fd(10);TM.circle(-5,90);
+  TM.fd(207);TM.circle(-5,90);TM.fd(10);TM.circle(-5,90);
+  TM.end_fill();
+}
+function nak(){
+  ankur(-10,158);TM.seth(315);
+  TM.fillcolor("#e70010");TM.begin_fill();
+  TM.circle(20);TM.end_fill();
+}
+function black_aankha(){
+  TM.seth(0);ankur(-20,195);
+  TM.fillcolor("#000000");TM.begin_fill();TM.circle(13);TM.end_fill();
+  TM.pensize(6);ankur(20,205);TM.seth(75);TM.circle(-10,150);
+  TM.pensize(3);
+  ankur(-17,200);TM.seth(0);
+  TM.fillcolor("#ffffff");TM.begin_fill();TM.circle(5);TM.end_fill();
+  ankur(0,0);
+}
+function face(){
+  TM.fd(183);TM.lt(45);
+  TM.fillcolor("#ffffff");TM.begin_fill();
+  TM.circle(120,100);TM.seth(180);
+  TM.fd(121);TM.pendown();TM.seth(215);
+  TM.circle(120,100);TM.end_fill();
+  ankur(63.56,218.24);TM.seth(90);aankha();
+  TM.seth(180);TM.penup();TM.fd(60);TM.pendown();
+  TM.seth(90);aankha();
+  TM.penup();TM.seth(180);TM.fd(60);
+}
+function taauko(){
+  TM.penup();TM.circle(150,40);TM.pendown();
+  TM.fillcolor("#00a0de");TM.begin_fill();
+  TM.circle(150,280);TM.end_fill();
+}
+function Doraemon(){
+  taauko();muflar();face();nak();mukh();daari();
+  ankur(0,0);TM.seth(0);TM.penup();TM.circle(150,50);TM.pendown();
+  TM.seth(30);TM.fd(40);TM.seth(70);TM.circle(-30,270);
+  TM.fillcolor("#00a0de");TM.begin_fill();
+  TM.seth(230);TM.fd(80);TM.seth(90);TM.circle(1000,1);
+  TM.seth(-89);TM.circle(-1000,10);
+  TM.seth(180);TM.fd(70);TM.seth(90);TM.circle(30,180);
+  TM.seth(180);TM.fd(70);
+  TM.seth(100);TM.circle(-1000,9);
+  TM.seth(-86);TM.circle(1000,2);
+  TM.seth(230);TM.fd(40);
+  TM.circle(-30,230);TM.seth(45);TM.fd(81);TM.seth(0);TM.fd(203);
+  TM.circle(5,90);TM.fd(10);TM.circle(5,90);TM.fd(7);
+  TM.seth(40);TM.circle(150,10);TM.seth(30);TM.fd(40);
+  TM.end_fill();
+  TM.seth(70);TM.fillcolor("#ffffff");TM.begin_fill();
+  TM.circle(-30);TM.end_fill();
+  ankur(103.74,-182.59);TM.seth(0);
+  TM.fillcolor("#ffffff");TM.begin_fill();
+  TM.fd(15);TM.circle(-15,180);TM.fd(90);TM.circle(-15,180);TM.fd(10);
+  TM.end_fill();
+  ankur(-96.26,-182.59);TM.seth(180);
+  TM.fillcolor("#ffffff");TM.begin_fill();
+  TM.fd(15);TM.circle(15,180);TM.fd(90);TM.circle(15,180);TM.fd(10);
+  TM.end_fill();
+  ankur(-133.97,-91.81);TM.seth(50);
+  TM.fillcolor("#ffffff");TM.begin_fill();
+  TM.circle(30);TM.end_fill();
+  ankur(-103.42,15.09);TM.seth(0);TM.fd(38);TM.seth(230);
+  TM.begin_fill();TM.circle(90,260);TM.end_fill();
+  ankur(5,-40);TM.seth(0);TM.fd(70);TM.seth(-90);
+  TM.circle(-70,180);TM.seth(0);TM.fd(70);
+  ankur(-103.42,15.09);TM.fd(90);TM.seth(70);
+  TM.fillcolor("#ffd200");TM.begin_fill();TM.circle(-20);TM.end_fill();
+  TM.seth(170);TM.fillcolor("#ffd200");TM.begin_fill();
+  TM.circle(-2,180);TM.seth(10);TM.circle(-100,22);TM.circle(-2,180);
+  TM.seth(180-10);TM.circle(100,22);TM.end_fill();
+  TM.goto(-13.42,15.09);TM.seth(250);TM.circle(20,110);
+  TM.seth(90);TM.fd(15);TM.dot(10);
+  ankur(0,-150);
+  black_aankha();
+}
+TM.pensize(3);
+Doraemon();
+ankur(100,-300);
+
+var OPS=TM.T.ops;
+
+/* ---------- Progressive renderer ---------- */
+var canvas=document.getElementById("c"),ctx=canvas.getContext("2d");
+var statusEl=document.getElementById("status"),barEl=document.getElementById("bar");
+var units=[],i,op;
+for(i=0;i<OPS.length;i++){op=OPS[i];units.push({op:op,n:op.t==="s"?op.p.length:1});}
+var totalUnits=0;for(i=0;i<units.length;i++)totalUnits+=units[i].n;
+
+var minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+function eat(pts){for(var k=0;k<pts.length;k++){var p=pts[k];if(p[0]<minX)minX=p[0];if(p[0]>maxX)maxX=p[0];if(p[1]<minY)minY=p[1];if(p[1]>maxY)maxY=p[1];}}
+for(i=0;i<OPS.length;i++)eat(OPS[i].p);
+var pad=24;minX-=pad;maxX+=pad;minY-=pad;maxY+=pad;
+
+var DPR=window.devicePixelRatio||1,view={w:0,h:0,s:1,ox:0,oy:0};
+function fit(){
+  var r=canvas.getBoundingClientRect(),W=Math.max(320,r.width),H=Math.max(420,r.height);
+  canvas.width=W*DPR;canvas.height=H*DPR;view.w=W;view.h=H;
+  var s=Math.min(W/(maxX-minX),H/(maxY-minY));
+  view.s=s;
+  view.ox=W/2-(minX+maxX)/2*s;
+  view.oy=H/2+(minY+maxY)/2*s;
+}
+function X(x){return view.ox+x*view.s;}
+function Y(y){return view.oy-y*view.s;}
+function drawOp(o,frac){
+  var p=o.p,k;
+  if(o.t==="f"){
+    ctx.beginPath();ctx.moveTo(X(p[0][0]),Y(p[0][1]));
+    for(k=1;k<p.length;k++)ctx.lineTo(X(p[k][0]),Y(p[k][1]));
+    ctx.closePath();ctx.fillStyle=o.c;ctx.fill();return;
+  }
+  var n=Math.max(2,Math.floor(p.length*frac));
+  ctx.beginPath();ctx.moveTo(X(p[0][0]),Y(p[0][1]));
+  for(k=1;k<n&&k<p.length;k++)ctx.lineTo(X(p[k][0]),Y(p[k][1]));
+  ctx.strokeStyle=o.c;ctx.lineWidth=Math.max(0.6,o.w*view.s*0.06);ctx.lineCap="round";ctx.lineJoin="round";ctx.stroke();
+}
+var DURATION=16000,startT=0,rafId=0,done=false;
+function render(now){
+  if(!startT)startT=now;
+  var t=Math.min(1,(now-startT)/DURATION),budget=t*totalUnits,used=0;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.fillStyle="#000";ctx.fillRect(0,0,view.w,view.h);
+  for(var j=0;j<units.length;j++){
+    var u=units[j];
+    if(used>=budget)break;
+    if(used+u.n<=budget){drawOp(u.op,1);used+=u.n;}
+    else{drawOp(u.op,(budget-used)/u.n);used=budget;break;}
+  }
+  var pct=Math.round(t*100);
+  barEl.style.width=pct+"%";
+  if(t<1){statusEl.textContent="Duke vizatuar… "+pct+"%";rafId=requestAnimationFrame(render);}
+  else{statusEl.textContent="Përfundoi ✅ — Doraemon gati!";done=true;}
+}
+function start(){cancelAnimationFrame(rafId);startT=0;done=false;fit();rafId=requestAnimationFrame(render);}
+document.getElementById("replay").onclick=start;
+window.addEventListener("resize",function(){if(done){fit();ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle="#000";ctx.fillRect(0,0,view.w,view.h);for(var j=0;j<units.length;j++)drawOp(units[j].op,1);}});
+fit();rafId=requestAnimationFrame(render);
+</script>
+</body>
+</html>
